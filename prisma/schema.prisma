@@ -7,12 +7,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ExamStatus { FOCUS ACTIVE PAUSED }
-enum TopicCoverage { INTEGRAL PARTIAL }
-enum SessionStatus { PENDING CATEGORIZED }
-enum StudyFocus { LEI_SECA JURISPRUDENCIA DOUTRINA CARDS QUESTOES }
-enum TimerSource { PRESET MANUAL }
-enum PlanStatus { DRAFT ACTIVE ARCHIVED }
+enum ExamStatus {
+  FOCUS
+  ACTIVE
+  PAUSED
+}
+
+enum TopicCoverage {
+  INTEGRAL
+  PARTIAL
+}
+
+enum SessionStatus {
+  PENDING
+  CATEGORIZED
+}
+
+enum StudyFocus {
+  LEI_SECA
+  JURISPRUDENCIA
+  DOUTRINA
+  CARDS
+  QUESTOES
+}
+
+enum TimerSource {
+  PRESET
+  MANUAL
+}
+
+enum PlanStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
 
 model User {
   id        String   @id @default(cuid())
@@ -30,28 +58,30 @@ model User {
 }
 
 model UserSettings {
-  id                 String   @id @default(cuid())
-  userId             String   @unique
-  defaultSessionMin  Int      @default(50)
-  weeklyTargetBlocks Int      @default(10)
-  maxSameDisciplineInRow Int  @default(2)
+  id                     String @id @default(cuid())
+  userId                 String @unique
+  defaultSessionMin      Int    @default(50)
+  weeklyTargetBlocks     Int    @default(10)
+  maxSameDisciplineInRow Int    @default(2)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Exam {
-  id            String     @id @default(cuid())
-  userId        String
-  name          String
-  status        ExamStatus @default(ACTIVE)
-  priorityWeight Int       @default(60) // ex.: FOCUS=100, ACTIVE=60
-  examDate      DateTime?
+  id             String     @id @default(cuid())
+  userId         String
+  name           String
+  status         ExamStatus @default(ACTIVE)
+  priorityWeight Int        @default(60) // ex.: FOCUS=100, ACTIVE=60
+  examDate       DateTime?
 
-  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   examTopics ExamTopic[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  StudySession StudySession[]
+  PlanItem     PlanItem[]
 
   @@index([userId, status])
 }
@@ -62,28 +92,29 @@ model Discipline {
   name         String
   basePriority Int    @default(3) // 1..5
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   topics Topic[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  StudySession StudySession[]
 
   @@unique([userId, name])
 }
 
 model Topic {
-  id              String  @id @default(cuid())
-  userId          String
-  disciplineId    String
-  parentId        String?
-  title           String
-  difficulty      Int     @default(3) // 1..5
-  personalPriority Int    @default(3) // 1..5
-  mastery         Int     @default(0) // 0..5
+  id               String  @id @default(cuid())
+  userId           String
+  disciplineId     String
+  parentId         String?
+  title            String
+  difficulty       Int     @default(3) // 1..5
+  personalPriority Int     @default(3) // 1..5
+  mastery          Int     @default(0) // 0..5
 
   // métricas denormalizadas (opcional, mas útil)
-  lastTouchAt     DateTime?
-  touchCount      Int     @default(0)
+  lastTouchAt DateTime?
+  touchCount  Int       @default(0)
 
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   discipline Discipline @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
@@ -94,20 +125,21 @@ model Topic {
   sessions   StudySession[]
   trailState TopicTrailState?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  PlanItem  PlanItem[]
 
   @@index([userId, disciplineId])
   @@index([userId, lastTouchAt])
 }
 
 model ExamTopic {
-  id            String        @id @default(cuid())
-  examId        String
-  topicId       String
-  coverage      TopicCoverage @default(INTEGRAL)
-  examImportance Int          @default(3) // 1..5
-  notes         String?
+  id             String        @id @default(cuid())
+  examId         String
+  topicId        String
+  coverage       TopicCoverage @default(INTEGRAL)
+  examImportance Int           @default(3) // 1..5
+  notes          String?
 
   exam  Exam  @relation(fields: [examId], references: [id], onDelete: Cascade)
   topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
@@ -125,23 +157,23 @@ model StudySession {
   durationMin Int
   status      SessionStatus @default(PENDING)
 
-  topicId     String?
+  topicId      String?
   disciplineId String?
-  examId      String?
+  examId       String?
 
-  focus       StudyFocus?
-  qualityScore Int?          // 0..5
-  quality     Int?          // 0..5
-  performance Int?          // 0..100
-  notes       String?
+  focus        StudyFocus?
+  qualityScore Int? // 0..5
+  quality      Int? // 0..5
+  performance  Int? // 0..100
+  notes        String?
 
-  timerSource TimerSource   @default(MANUAL)
+  timerSource    TimerSource @default(MANUAL)
   timerPresetMin Int?
 
-  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic      Topic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic      Topic?      @relation(fields: [topicId], references: [id], onDelete: SetNull)
   discipline Discipline? @relation(fields: [disciplineId], references: [id], onDelete: SetNull)
-  exam       Exam? @relation(fields: [examId], references: [id], onDelete: SetNull)
+  exam       Exam?       @relation(fields: [examId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -153,29 +185,30 @@ model StudySession {
 }
 
 model TrailTemplate {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   userId    String
   name      String
   isDefault Boolean @default(false)
 
-  user  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   steps TrailStep[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  TopicTrailState TopicTrailState[]
 
   @@index([userId, isDefault])
 }
 
 model TrailStep {
-  id          String @id @default(cuid())
-  templateId  String
-  stepIndex   Int
-  offsetDays  Int
-  focus       StudyFocus
-  minMinutes  Int
-  maxMinutes  Int
-  label       String?
+  id         String     @id @default(cuid())
+  templateId String
+  stepIndex  Int
+  offsetDays Int
+  focus      StudyFocus
+  minMinutes Int
+  maxMinutes Int
+  label      String?
 
   template TrailTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
@@ -183,28 +216,28 @@ model TrailStep {
 }
 
 model TopicTrailState {
-  id            String @id @default(cuid())
-  topicId        String @unique
-  templateId     String
-  nextStepIndex  Int    @default(0)
-  nextDueAt      DateTime?
-  lastTouchAt    DateTime?
-  active         Boolean @default(true)
+  id            String    @id @default(cuid())
+  topicId       String    @unique
+  templateId    String
+  nextStepIndex Int       @default(0)
+  nextDueAt     DateTime?
+  lastTouchAt   DateTime?
+  active        Boolean   @default(true)
 
-  topic     Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  template  TrailTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  topic    Topic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  template TrailTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
 
   updatedAt DateTime @updatedAt
 }
 
 model PlanRun {
-  id        String @id @default(cuid())
+  id        String     @id @default(cuid())
   userId    String
   weekStart DateTime
   status    PlanStatus @default(DRAFT)
 
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items  PlanItem[]
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items PlanItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -215,16 +248,16 @@ model PlanRun {
 model PlanItem {
   id         String @id @default(cuid())
   planId     String
-  dayIndex   Int    // 0..6
-  orderIndex Int    // ordem no dia
+  dayIndex   Int // 0..6
+  orderIndex Int // ordem no dia
 
-  topicId    String
-  examId     String?
-  focus      StudyFocus
-  minutes    Int
+  topicId String
+  examId  String?
+  focus   StudyFocus
+  minutes Int
 
-  reason     String? // texto curto: "vencida", "cobertura", "baixo domínio", "trilha passo 2/6"
-  score      Float?
+  reason String? // texto curto: "vencida", "cobertura", "baixo domínio", "trilha passo 2/6"
+  score  Float?
 
   plan  PlanRun @relation(fields: [planId], references: [id], onDelete: Cascade)
   topic Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
