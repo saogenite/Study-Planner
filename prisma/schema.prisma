@@ -121,6 +121,7 @@ model StudySession {
   userId      String
   startedAt   DateTime
   endedAt     DateTime
+  startAt     DateTime
   durationMin Int
   status      SessionStatus @default(PENDING)
 
@@ -130,6 +131,7 @@ model StudySession {
 
   focus       StudyFocus?
   qualityScore Int?          // 0..5
+  quality     Int?          // 0..5
   performance Int?          // 0..100
   notes       String?
 
@@ -146,6 +148,8 @@ model StudySession {
 
   @@index([userId, status, endedAt])
   @@index([topicId, endedAt])
+  @@index([userId, status, startAt])
+  @@index([topicId, startAt])
 }
 
 model TrailTemplate {
