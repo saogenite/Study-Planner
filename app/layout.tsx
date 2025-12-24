@@ -9,6 +9,8 @@ export const metadata = {
 
 const links = [
   { href: "/", label: "Início" },
+  { href: "/timer", label: "Timer" },
+  { href: "/sessoes/pendentes", label: "Pendentes" },
   { href: "/editais", label: "Editais" },
   { href: "/disciplinas", label: "Disciplinas" },
   { href: "/topicos", label: "Tópicos" },

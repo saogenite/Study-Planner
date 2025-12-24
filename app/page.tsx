@@ -5,6 +5,12 @@ export default function Home() {
       <p>Escolha um módulo para começar o cadastro.</p>
       <ul>
         <li>
+          <a href="/timer">Timer</a>
+        </li>
+        <li>
+          <a href="/sessoes/pendentes">Sessões pendentes</a>
+        </li>
+        <li>
           <a href="/editais">Editais</a>
         </li>
         <li>
