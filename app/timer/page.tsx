@@ -86,7 +86,12 @@ export default function TimerPage() {
   };
 
   const finish = async () => {
-    if (!isRunning || !startedAt) {
+    if (!startedAt) {
+      setMessage("Inicie o cronômetro antes de finalizar.");
+      return;
+    }
+
+    if (!isRunning) {
       return;
     }
 
@@ -108,14 +113,35 @@ export default function TimerPage() {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      setMessage(error.message || "Erro ao registrar a sessão.");
+      const responseText = await response.text();
+      let errorMessage = `Erro ao registrar a sessão (status ${response.status}).`;
+
+      if (responseText) {
+        try {
+          const parsed = JSON.parse(responseText);
+          errorMessage = parsed.message || errorMessage;
+        } catch {
+          errorMessage = responseText;
+        }
+      }
+
+      setMessage(errorMessage);
       return;
+    }
+
+    try {
+      const data = await response.json();
+      if (data?.message) {
+        setMessage(data.message);
+      } else {
+        setMessage("Sessão registrada como pendente.");
+      }
+    } catch {
+      setMessage("Sessão registrada como pendente.");
     }
 
     setSecondsLeft(0);
     setStartedAt(null);
-    setMessage("Sessão registrada como pendente.");
   };
 
   return (

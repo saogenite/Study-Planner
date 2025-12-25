@@ -3,15 +3,14 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
-  const user = await prisma.user.upsert({
-  where: { email: "seed@example.com" },
-  update: {},
-  create: {
-    email: "seed@example.com",
-    settings: { create: {} },
-  },
-});
-
+  const user = await prisma.user.create({
+    data: {
+      email: "seed@example.com",
+      settings: {
+        create: {}
+      }
+    }
+  });
 
   await prisma.trailTemplate.create({
     data: {

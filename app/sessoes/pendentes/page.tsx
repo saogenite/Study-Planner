@@ -87,9 +87,14 @@ export default function SessoesPendentesPage() {
 
       {message && <p style={{ color: "crimson", marginTop: "1rem" }}>{message}</p>}
 
-      <ul style={{ marginTop: "1.5rem" }}>
-        {sessions.map((session) => (
-          <li key={session.id} style={{ paddingBottom: "1rem" }}>
+      {sessions.length === 0 ? (
+        <p style={{ marginTop: "1.5rem" }}>
+          Nenhuma sessão pendente no momento.
+        </p>
+      ) : (
+        <ul style={{ marginTop: "1.5rem" }}>
+          {sessions.map((session) => (
+            <li key={session.id} style={{ paddingBottom: "1rem" }}>
             <strong>Sessão de {session.durationMin} min</strong>
             <div>
               Início: {new Date(session.startedAt).toLocaleString("pt-BR")} — Fim: {" "}
@@ -154,9 +159,10 @@ export default function SessoesPendentesPage() {
             <button type="button" style={{ marginTop: "0.75rem" }} onClick={() => save(session)}>
               Salvar categorização
             </button>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }
