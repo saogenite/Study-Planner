@@ -7,12 +7,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ExamStatus { FOCUS ACTIVE PAUSED }
-enum TopicCoverage { INTEGRAL PARTIAL }
-enum SessionStatus { PENDING CATEGORIZED }
-enum StudyFocus { LEI_SECA JURISPRUDENCIA DOUTRINA CARDS QUESTOES }
-enum TimerSource { PRESET MANUAL }
-enum PlanStatus { DRAFT ACTIVE ARCHIVED }
+enum ExamStatus { 
+FOCUS 
+ACTIVE 
+PAUSED 
+}
+enum TopicCoverage { 
+INTEGRAL 
+PARTIAL 
+}
+enum SessionStatus { 
+PENDING 
+CATEGORIZED 
+}
+enum StudyFocus { 
+LEI_SECA 
+JURISPRUDENCIA 
+DOUTRINA 
+CARDS 
+QUESTOES 
+}
+enum TimerSource { 
+PRESET 
+MANUAL 
+}
+enum PlanStatus { 
+DRAFT 
+ACTIVE 
+ARCHIVED 
+}
 
 model User {
   id        String   @id @default(cuid())
