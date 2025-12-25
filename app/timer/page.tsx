@@ -1,56 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { formatTime, useTimer } from "@/components/timer-context";
 
 const presets = [25, 50, 60, 90];
 
-function formatTime(totalSeconds: number) {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-}
-
 export default function TimerPage() {
+  const timer = useTimer();
   const [mode, setMode] = useState<"PRESET" | "MANUAL">("PRESET");
   const [presetMinutes, setPresetMinutes] = useState(50);
   const [manualMinutes, setManualMinutes] = useState("30");
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(0);
-  const [startedAt, setStartedAt] = useState<Date | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   const durationMin = useMemo(() => {
     return mode === "PRESET" ? presetMinutes : Number(manualMinutes || 0);
   }, [mode, presetMinutes, manualMinutes]);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout | undefined;
-
-    if (isRunning && !isPaused) {
-      timer = setInterval(() => {
-        setSecondsLeft((prev) => {
-          if (prev <= 1) {
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-
-    return () => {
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
-  }, [isRunning, isPaused]);
-
-  useEffect(() => {
-    if (isRunning && secondsLeft === 0) {
-      finish();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [secondsLeft]);
 
   const validateManual = () => {
     const value = Number(manualMinutes);
@@ -72,76 +36,16 @@ export default function TimerPage() {
       return;
     }
 
-    setSecondsLeft(durationMin * 60);
-    setIsRunning(true);
-    setIsPaused(false);
-    setStartedAt(new Date());
+    timer.start(mode, durationMin);
   };
 
   const togglePause = () => {
-    if (!isRunning) {
-      return;
-    }
-    setIsPaused((prev) => !prev);
+    timer.togglePause();
   };
 
   const finish = async () => {
-    if (!startedAt) {
-      setMessage("Inicie o cronômetro antes de finalizar.");
-      return;
-    }
-
-    if (!isRunning) {
-      return;
-    }
-
-    setIsRunning(false);
-    setIsPaused(false);
-
-    const endedAt = new Date();
-    const payload = {
-      startedAt: startedAt.toISOString(),
-      endedAt: endedAt.toISOString(),
-      durationMin,
-      timerSource: mode
-    };
-
-    const response = await fetch("/api/sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const responseText = await response.text();
-      let errorMessage = `Erro ao registrar a sessão (status ${response.status}).`;
-
-      if (responseText) {
-        try {
-          const parsed = JSON.parse(responseText);
-          errorMessage = parsed.message || errorMessage;
-        } catch {
-          errorMessage = responseText;
-        }
-      }
-
-      setMessage(errorMessage);
-      return;
-    }
-
-    try {
-      const data = await response.json();
-      if (data?.message) {
-        setMessage(data.message);
-      } else {
-        setMessage("Sessão registrada como pendente.");
-      }
-    } catch {
-      setMessage("Sessão registrada como pendente.");
-    }
-
-    setSecondsLeft(0);
-    setStartedAt(null);
+    const result = await timer.finish();
+    setMessage(result.message);
   };
 
   return (
@@ -151,7 +55,9 @@ export default function TimerPage() {
 
       <section style={{ marginTop: "1.25rem" }}>
         <h2>Tempo restante</h2>
-        <p style={{ fontSize: "2rem", marginTop: "0.5rem" }}>{formatTime(secondsLeft)}</p>
+        <p style={{ fontSize: "2rem", marginTop: "0.5rem" }}>
+          {formatTime(timer.remainingSeconds)}
+        </p>
       </section>
 
       <form style={{ marginTop: "1.5rem" }}>
@@ -202,15 +108,15 @@ export default function TimerPage() {
       </form>
 
       <div style={{ marginTop: "1rem" }}>
-        {!isRunning && (
+        {!timer.running && (
           <button type="button" onClick={start}>
             Iniciar
           </button>
         )}
-        {isRunning && (
+        {timer.running && (
           <>
             <button type="button" onClick={togglePause}>
-              {isPaused ? "Retomar" : "Pausar"}
+              {timer.paused ? "Retomar" : "Pausar"}
             </button>
             <button type="button" onClick={finish} style={{ marginLeft: "0.5rem" }}>
               Finalizar

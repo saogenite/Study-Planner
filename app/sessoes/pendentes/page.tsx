@@ -51,6 +51,11 @@ export default function SessoesPendentesPage() {
 
   useEffect(() => {
     load();
+    const handleUpdate = () => {
+      load();
+    };
+    window.addEventListener("studyplanner:sessions-updated", handleUpdate);
+    return () => window.removeEventListener("studyplanner:sessions-updated", handleUpdate);
   }, []);
 
   const updateSession = (id: string, data: Partial<Session>) => {
