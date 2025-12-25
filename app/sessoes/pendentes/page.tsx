@@ -40,7 +40,12 @@ export default function SessoesPendentesPage() {
     ]);
     const sessionsData = await sessionsRes.json();
     const topicsData = await topicsRes.json();
-    setSessions(sessionsData);
+    const sessionList = Array.isArray(sessionsData.sessions)
+      ? sessionsData.sessions
+      : Array.isArray(sessionsData)
+      ? sessionsData
+      : [];
+    setSessions(sessionList);
     setTopics(topicsData);
   };
 

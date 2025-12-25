@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       }
     });
 
-    return NextResponse.json(sessions);
+    return NextResponse.json({ sessions });
   } catch (error) {
     console.error(error);
     return NextResponse.json(
@@ -35,8 +35,10 @@ export async function POST(request: Request) {
       body.timerSource === "PRESET" || body.timerSource === "MANUAL"
         ? body.timerSource
         : null;
-    const startedAt = body.startedAt ? new Date(body.startedAt) : null;
-    const endedAt = body.endedAt ? new Date(body.endedAt) : null;
+    const rawStartedAt = body.startedAt ?? body.startAt ?? null;
+    const rawEndedAt = body.endedAt ?? body.endAt ?? null;
+    const startedAt = rawStartedAt ? new Date(rawStartedAt) : null;
+    const endedAt = rawEndedAt ? new Date(rawEndedAt) : null;
 
     if (!startedAt || Number.isNaN(startedAt.getTime())) {
       return NextResponse.json(
@@ -79,7 +81,10 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.json(session, { status: 201 });
+    return NextResponse.json(
+      { message: "Sessão registrada como pendente.", session },
+      { status: 201 }
+    );
   } catch (error) {
     console.error(error);
     return NextResponse.json(
